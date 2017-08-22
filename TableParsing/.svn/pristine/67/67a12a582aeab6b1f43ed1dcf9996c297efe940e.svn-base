@@ -1,0 +1,116 @@
+package com.parse.java.postgres.impl;
+
+import java.sql.Connection;
+import java.sql.Statement;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.parse.java.constant.Constants;
+import com.parse.java.interfaces.IDBProvider;
+import com.parse.java.model.ColumnModel;
+import com.parse.java.model.EntityModel;
+
+public class PostgresDBProvider implements IDBProvider,Constants {
+
+	@Override
+	public String generateCreateTableStatement(EntityModel entity) throws Exception {
+		StringBuilder stringComment = new StringBuilder();
+		StringBuilder stringSequence = new StringBuilder();
+		StringBuilder string = new StringBuilder("CREATE TABLE "+entity.getTableName()+"(") ;
+		int firstElement = 0;
+		for(ColumnModel column:entity.getColumns()){
+			if(firstElement!=0){
+				string.append(",");
+				if(formatSQL){
+					string.append("\n");
+				}
+			}
+			firstElement++;
+			
+			string.append(column.getColumnName() +StringUtils.SPACE);
+			boolean isTimestamp = false;
+			boolean isVarchar = false;
+			boolean isSizeBracketRequired = true;
+			if(numericValues.contains(column.getType().toUpperCase())){
+				string.append("NUMERIC("+column.getSize());
+				if(StringUtils.isEmpty(column.getPercision())){
+					string.append(",0");
+				} else {
+					string.append(","+column.getPercision());
+				}
+			}else if(stringValues.contains(column.getType().toUpperCase())){
+				isVarchar = true;
+				string.append("CHARACTER VARYING("+column.getSize());
+
+			}else if(timeValues.contains(column.getType().toUpperCase())){
+				string.append("TIMESTAMP("+column.getSize());
+				isTimestamp=true;
+			} else {
+				if(StringUtils.isNotEmpty(column.getSize()) && !"0".equalsIgnoreCase(column.getSize())){
+					string.append(column.getType()+"("+column.getSize());
+				} else {
+					string.append(column.getType());
+					isSizeBracketRequired = false;
+				}
+			}
+			if(isSizeBracketRequired){
+				string.append(")");
+			}
+			
+			if(column.isPrimaryKey()){
+				string.append(" PRIMARY KEY");
+			}
+			if(column.isUnique()){
+				string.append(" UNIQUE");
+			}
+			if(isTimestamp){
+				string.append(" WITHOUT TIME ZONE");
+			}
+			if(column.isAutoIncrement()){
+				stringSequence.append("CREATE SEQUENCE "+entity.getTableName()+"_"+column.getColumnName()+"_SEQ START 1;");
+				column.setDefaultValue("nextval('"+entity.getTableName()+"_"+column.getColumnName()+"_SEQ"+"')");
+			} 
+			if(StringUtils.isNotEmpty(column.getDefaultValue())){
+				string.append(" DEFAULT ");
+				if(isVarchar){
+					string.append("'"+column.getDefaultValue()+"'");
+				} else if(isTimestamp){
+					string.append("now()");
+				} else {
+					string.append(column.getDefaultValue());
+				}
+			}
+			if(!column.isNullable() && !column.isPrimaryKey()){
+				string.append(" NOT NULL");
+			}
+			if(column.isForeignKey()){
+				string.append(" REFERENCES "+column.getForeignKeyTableName() +" ("+column.getForeignKeyName()+")");
+			}
+			if(StringUtils.isNotBlank(column.getComments())){
+				String comment ="COMMENT ON COLUMN "+ entity.getTableName() +"."+ column.getColumnName()+" IS '"+column.getComments()+"';";
+				stringComment.append(comment);
+			}
+			
+		}
+		string.append(");");
+		if(StringUtils.isNotBlank(entity.getComment())){
+			String comment ="COMMENT ON TABLE "+ entity.getTableName()+" IS '"+entity.getComment()+"';";
+			string.append(comment);
+		}
+
+		return stringSequence.toString()+"\n"+string.toString()+"\n"+stringComment.toString();
+	}
+
+	@Override
+	public void generateTablesByFile(Connection connection, String inputFile) throws Exception {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void generateTablesThroughStatement(Statement statement, String statementString) throws Exception {
+		// TODO Auto-generated method stub
+
+	}
+
+}

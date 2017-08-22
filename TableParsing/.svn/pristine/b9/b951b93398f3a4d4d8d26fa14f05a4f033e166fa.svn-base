@@ -1,0 +1,22 @@
+#Excel to SQL Statements.
+#Column number starts from 0.
+#Number of sheets starts from 1.
+IDBProvider=com.parse.java.postgres.impl.PostgresDBProvider
+IScriptGenerator=com.parse.java.poi.impl.POIScriptGenerator
+inputFile=/Users/shaaswatsharma/Dropbox/CARES 2.0/Data Model/Entity Model Description.xlsx
+outputFile=/Users/shaaswatsharma/Dropbox/CARES 2.0/Data Model/%d.Generated_EE_Model.sql
+startSheetNumber=0
+numberOfSheets=3
+
+#Excel to Alias Excel Sheet Convertor. 
+IAliasSheetGenerator=com.parse.java.aliasexcel.impl.AliasExcelSheetGenerator
+aliasMappingFile=D:\\Hydra\\TableParsing\\resources\\CMS_NEW_STD_TERM_20170127.xlsx
+aliasInputFile=D:\\Hydra\\TableParsing\\resources\\Input.xlsx
+aliasMappingStartSheetNumber=0
+aliasMappingNumberOfSheets=1
+aliasMappingKeyColumnNumber=1
+aliasMappingValueColumnNumber=0
+aliasInputStartSheetNumber=0
+aliasInputNumberOfSheets=2
+alisInputAbbreviatedColumnNumber=0
+
