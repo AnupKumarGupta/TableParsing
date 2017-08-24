@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -76,7 +77,7 @@ public class POIScriptGenerator implements IScriptGenerator {
 						if (column != null) {
 							entity.addColumns(column);
 						} else {
-							log.error("Column skipped in the table : " + entity.getTableName());
+							//log.error("Column skipped in the table : " + entity.getTableName());
 						}
 					} else {
 						log.error("Row found belonging to no entity : " + row.getRowNum());
@@ -130,24 +131,22 @@ public class POIScriptGenerator implements IScriptGenerator {
 		ColumnModel column = new ColumnModel();
 
 		// Column Name
-		column.setColumnName(row.getCell(Constants.INDEX_COLUMN_NAME).getStringCellValue());
+		column.setColumnName(row.getCell(Constants.INDEX_COLUMN_NAME).getStringCellValue().toString().trim());
 
 		// Constraints
-		if (StringUtils.isNotEmpty(row.getCell(Constants.INDEX_COLUMN_CONSTRAINT).getStringCellValue())) {
+		Cell contraintCol = row.getCell(Constants.INDEX_COLUMN_CONSTRAINT);
+		if (contraintCol != null && StringUtils.isNotEmpty(contraintCol.getStringCellValue())) {
 			if (row.getCell(Constants.INDEX_COLUMN_CONSTRAINT).getStringCellValue().equalsIgnoreCase("Primary Key")) {
 				column.setPrimaryKey(true);
 			} else if (row.getCell(Constants.INDEX_COLUMN_CONSTRAINT).getStringCellValue().equalsIgnoreCase("Unique")) {
 				column.setUnique(true);
-			} else if (row.getCell(Constants.INDEX_COLUMN_CONSTRAINT).getStringCellValue()
-					.equalsIgnoreCase("Foreign Key")) {
+			} else if (row.getCell(Constants.INDEX_COLUMN_CONSTRAINT).getStringCellValue().equalsIgnoreCase("Foreign Key")) {
 				column.setForeignKey(true);
-				if (StringUtils
-						.isNotBlank(row.getCell(Constants.INDEX_COLUMN_FOREIGN_TABLE_NAME).getStringCellValue())) {
-					column.setForeignKeyTableName(
-							row.getCell(Constants.INDEX_COLUMN_FOREIGN_TABLE_NAME).getStringCellValue());
+				if (StringUtils.isNotBlank(row.getCell(Constants.INDEX_COLUMN_FOREIGN_TABLE_NAME).getStringCellValue())) {
+					column.setForeignKeyTableName(row.getCell(Constants.INDEX_COLUMN_FOREIGN_TABLE_NAME).getStringCellValue());
 				} else {
-					column.setForeignKeyTableName(tablePrefix + "_"
-							+ column.getColumnName().replace(Constants.FOREIGN_KEY_SUFFIX, StringUtils.EMPTY));
+					column.setForeignKeyTableName(
+							tablePrefix + "_" + column.getColumnName().replace(Constants.FOREIGN_KEY_SUFFIX, StringUtils.EMPTY));
 				}
 				column.setForeignKeyName(column.getColumnName());
 			}
@@ -163,7 +162,10 @@ public class POIScriptGenerator implements IScriptGenerator {
 		column.setPercision(String.valueOf((int) row.getCell(Constants.INDEX_COLUMN_PERCISION).getNumericCellValue()));
 
 		// Column DEFAULT Value
-		column.setDefaultValue(row.getCell(Constants.INDEX_COLUMN_DEFAULT_VALUE).getStringCellValue());
+		Cell defaultCol = row.getCell(Constants.INDEX_COLUMN_DEFAULT_VALUE);
+		if (defaultCol != null) {
+			column.setDefaultValue(defaultCol.getStringCellValue());
+		}
 
 		// Nullable
 		if (StringUtils.isNotEmpty(row.getCell(Constants.INDEX_COLUMN_NULLABLE).getStringCellValue())) {

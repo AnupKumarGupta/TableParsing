@@ -47,7 +47,7 @@ public class Helper implements Constants {
 		boolean isVarchar = false;
 		boolean isSizeBracketRequired = true;
 		if (numericValues.contains(column.getType().toUpperCase())) {
-			excelStringBuilder.append("NUMERIC(" + column.getSize());
+			excelStringBuilder.append(column.getType() + "(" + column.getSize());
 			if (StringUtils.isEmpty(column.getPercision())) {
 				excelStringBuilder.append(",0");
 			} else {
@@ -80,25 +80,7 @@ public class Helper implements Constants {
 			newAlterStatement.append("ALTER COLUMN ").append(columnName).append(" TYPE ").append(excelStringBuilder.toString());
 		}
 
-		/*
-		 * if (pkey.equals(columnName) ^ column.isPrimaryKey()) {
-		 * 
-		 * if (!newAlterStatement.toString().isEmpty()) {
-		 * newAlterStatement.append(','); }
-		 * 
-		 * if (column.isPrimaryKey()) { // Add constraint
-		 * 
-		 * newAlterStatement.append("ADD CONSTRAINT ").append(columnName).
-		 * append("_pkey UNIQUE (") .append(columnName).append(")");
-		 * 
-		 * } else { // drop constraint
-		 * newAlterStatement.append("DROP CONSTRAINT ").append(columnName).
-		 * append("_pkey"); }
-		 * 
-		 * }
-		 */
-
-		if ((uniqueColumns.contains(columnName) && !pkey.equals(columnName)) ^ column.isUnique()) {
+		if ((uniqueColumns.contains(columnName) && !pkey.equalsIgnoreCase(columnName)) ^ column.isUnique()) {
 
 			if (!newAlterStatement.toString().isEmpty()) {
 				newAlterStatement.append(',');
@@ -116,7 +98,8 @@ public class Helper implements Constants {
 			}
 		}
 
-		if ((rsmd.isNullable(i) == ResultSetMetaData.columnNullable && !pkey.equals(columnName)) ^ column.isNullable()) {
+		if ((rsmd.isNullable(i) == ResultSetMetaData.columnNullable && !pkey.equalsIgnoreCase(columnName))
+				^ column.isNullable()) {
 
 			if (!newAlterStatement.toString().isEmpty()) {
 				newAlterStatement.append(',');
@@ -146,7 +129,7 @@ public class Helper implements Constants {
 		boolean isSizeBracketRequired = true;
 		StringBuilder string = new StringBuilder();
 		if (numericValues.contains(column.getType().toUpperCase())) {
-			string.append("NUMERIC(" + column.getSize());
+			string.append(column.getType() + "(" + column.getSize());
 			if (StringUtils.isEmpty(column.getPercision())) {
 				string.append(",0");
 			} else {
@@ -180,7 +163,7 @@ public class Helper implements Constants {
 		if (isTimestamp) {
 			string.append(" WITHOUT TIME ZONE");
 		}
-		if (StringUtils.isNotEmpty(column.getDefaultValue()) || !column.isNullable()) {
+		if ((StringUtils.isNotEmpty(column.getDefaultValue()) || !column.isNullable()) && !column.isPrimaryKey()) {
 			string.append(" DEFAULT ");
 			String def = column.getDefaultValue();
 			if (isVarchar) {
@@ -188,10 +171,10 @@ public class Helper implements Constants {
 			} else if (isTimestamp) {
 				string.append("now()");
 			} else {
-				if(StringUtils.isEmpty(def)){
+				if (StringUtils.isEmpty(def)) {
 					def = "0";
 				}
-				
+
 				string.append(def);
 			}
 		}

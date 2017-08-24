@@ -35,25 +35,27 @@ public class PostgresDBProvider implements IDBProvider, Constants {
 			Statement stmt = con.createStatement();
 			rs = stmt.executeQuery(sql);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		}
 
 		if (rs == null) {
+			// table does not exist in the database, so return the create query
 			return createSqlQueryFromExcel(entity);
 		} else {
+			// table exists, so generate an alter query, if necessary
 			return printSchemaFromSql(con, databaseMetaData, rs, entity);
 		}
 	}
 
-	private String printSchemaFromSql(Connection con, DatabaseMetaData databaseMetaData, ResultSet rs,
-			EntityModel entity) throws SQLException {
+	private String printSchemaFromSql(Connection con, DatabaseMetaData databaseMetaData, ResultSet rs, EntityModel entity)
+			throws SQLException {
 
-		System.out.println(createSqlQueryFromExcel(entity));
-		System.out.println("--------------");
+		// testing only //
+		// System.out.println(createSqlQueryFromExcel(entity));
+		// System.out.println("--------------");
 
 		// -----------primary key--------------
-		ResultSet resultForPk = databaseMetaData.getPrimaryKeys("", Main.SCHEMA_NAME,
-				entity.getTableName().toLowerCase());
+		ResultSet resultForPk = databaseMetaData.getPrimaryKeys("", Main.SCHEMA_NAME, entity.getTableName().toLowerCase());
 
 		String pkey = "";
 		while (resultForPk.next()) {
@@ -61,8 +63,8 @@ public class PostgresDBProvider implements IDBProvider, Constants {
 		}
 
 		// -----------unique keys--------------
-		ResultSet resultForUnique = databaseMetaData.getIndexInfo("", Main.SCHEMA_NAME,
-				entity.getTableName().toLowerCase(), true, false);
+		ResultSet resultForUnique = databaseMetaData.getIndexInfo("", Main.SCHEMA_NAME, entity.getTableName().toLowerCase(), true,
+				false);
 
 		ArrayList<String> uniqueColumns = new ArrayList<String>();
 		while (resultForUnique.next()) {
@@ -70,84 +72,67 @@ public class PostgresDBProvider implements IDBProvider, Constants {
 		}
 
 		// -----------default value--------------
-		/*try {
-			ResultSet result = null;
-			String sql = "select column_name, data_type, character_maximum_length,column_default,is_nullable as IS_NULLABLE,character_maximum_length,is_identity from INFORMATION_SCHEMA.COLUMNS where table_name = '"
-					+ entity.getTableName().toLowerCase() + "';";
-			Statement stmt = con.createStatement();
-			result = stmt.executeQuery(sql);
-			String columnDefaultVal = "";
-			if (result.next()) {
-				columnDefaultVal = result.getString("COLUMN_DEF");
-			}
-			System.out.println("Default Value of Column is " + columnDefaultVal);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}*/
+		/*
+		 * try { ResultSet result = null; String sql =
+		 * "select column_name, data_type, character_maximum_length,column_default,is_nullable as IS_NULLABLE,character_maximum_length,is_identity from INFORMATION_SCHEMA.COLUMNS where table_name = '"
+		 * + entity.getTableName().toLowerCase() + "';"; Statement stmt =
+		 * con.createStatement(); result = stmt.executeQuery(sql); String
+		 * columnDefaultVal = ""; if (result.next()) { columnDefaultVal =
+		 * result.getString("COLUMN_DEF"); }
+		 * System.out.println("Default Value of Column is " + columnDefaultVal);
+		 * } catch (SQLException e) { e.printStackTrace(); }
+		 */
 
-		/*for (ColumnModel column : entity.getColumns()) {
-
-			ResultSet resultForDefault = databaseMetaData.getColumns(con.getCatalog(), databaseMetaData.getUserName(),
-					entity.getTableName().toLowerCase(), column.getColumnName().toLowerCase());
-			String columnDefaultVal = "";
-			if (resultForDefault.next()) {
-				columnDefaultVal = resultForDefault.getString("COLUMN_DEF");
-			}
-
-			System.out.println("Default Value of Column is " + columnDefaultVal);
-		}*/
+		/*
+		 * for (ColumnModel column : entity.getColumns()) {
+		 * 
+		 * ResultSet resultForDefault =
+		 * databaseMetaData.getColumns(con.getCatalog(),
+		 * databaseMetaData.getUserName(), entity.getTableName().toLowerCase(),
+		 * column.getColumnName().toLowerCase()); String columnDefaultVal = "";
+		 * if (resultForDefault.next()) { columnDefaultVal =
+		 * resultForDefault.getString("COLUMN_DEF"); }
+		 * 
+		 * System.out.println("Default Value of Column is " + columnDefaultVal);
+		 * }
+		 */
 
 		ResultSetMetaData rsmd = rs.getMetaData();
 		int columnCount = rsmd.getColumnCount();
-		StringBuilder sb = new StringBuilder(1024);
-		if (columnCount > 0) {
-			sb.append("CREATE TABLE ").append(rsmd.getTableName(1)).append(" (");
-		}
-		for (int i = 1; i <= columnCount; i++) {
-			if (i > 1){
-				sb.append(", ");
-			}
-			String columnName = rsmd.getColumnLabel(i);
-			String columnType = rsmd.getColumnTypeName(i);
-
-			sb.append(columnName).append(" ");
-
-			if (columnType.equals("varchar")) {
-				sb.append("CHARACTER VARYING");
-			} else {
-				sb.append(columnType);
-			}
-
-			int precision = rsmd.getPrecision(i);
-			if (precision != 0) {
-				sb.append("(").append(precision);
-
-				if (columnType.equalsIgnoreCase("numeric")) {
-					sb.append(',').append(rsmd.getScale(i));
-				}
-
-				sb.append(")");
-			}
-
-			if (columnType.equals("timestamp")) {
-				sb.append(" WITHOUT TIME ZONE");
-			}
-
-			if (pkey.equals(columnName)) {
-				sb.append(" PRIMARY KEY");
-			} else if (uniqueColumns.contains(columnName)) {
-				sb.append(" UNIQUE");
-			}
-
-			if (rsmd.isNullable(i) == ResultSetMetaData.columnNoNulls && !pkey.equals(columnName)) {
-				sb.append(" NOT NULL");
-			}
-
-		} // for columns
-		sb.append(" ) ");
-
-		System.out.println(sb.toString());
-		System.out.println("--------------");
+		/*
+		 * StringBuilder sb = new StringBuilder(1024); if (columnCount > 0) {
+		 * sb.append("CREATE TABLE ").append(rsmd.getTableName(1)).append(" (");
+		 * } for (int i = 1; i <= columnCount; i++) { if (i > 1) {
+		 * sb.append(", "); } String columnName = rsmd.getColumnLabel(i); String
+		 * columnType = rsmd.getColumnTypeName(i);
+		 * 
+		 * sb.append(columnName).append(" ");
+		 * 
+		 * if (columnType.equals("varchar")) { sb.append("CHARACTER VARYING"); }
+		 * else { sb.append(columnType); }
+		 * 
+		 * int precision = rsmd.getPrecision(i); if (precision != 0) {
+		 * sb.append("(").append(precision);
+		 * 
+		 * if (columnType.equalsIgnoreCase("numeric")) {
+		 * sb.append(',').append(rsmd.getScale(i)); }
+		 * 
+		 * sb.append(")"); }
+		 * 
+		 * if (columnType.equals("timestamp")) {
+		 * sb.append(" WITHOUT TIME ZONE"); }
+		 * 
+		 * if (pkey.equals(columnName)) { sb.append(" PRIMARY KEY"); } else if
+		 * (uniqueColumns.contains(columnName)) { sb.append(" UNIQUE"); }
+		 * 
+		 * if (rsmd.isNullable(i) == ResultSetMetaData.columnNoNulls &&
+		 * !pkey.equals(columnName)) { sb.append(" NOT NULL"); }
+		 * 
+		 * } // for columns sb.append(" ) ");
+		 * 
+		 * System.out.println(sb.toString());
+		 * System.out.println("--------------");
+		 */
 
 		// generate alter query
 
@@ -196,10 +181,10 @@ public class PostgresDBProvider implements IDBProvider, Constants {
 				}
 			}
 		} // for columns
-		sb.append(" ) ");
+			// sb.append(" ) ");
 
 		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("New columns :" + newColumns.size() + "\nRemoved columns : " + removedColumns.size()
+		stringBuilder.append("New columns : " + newColumns.size() + "\nRemoved columns : " + removedColumns.size()
 				+ "\nModified columns : " + modifiedcolumns.size());
 		System.out.println(stringBuilder.toString());
 		System.out.println("--------------");
@@ -207,7 +192,7 @@ public class PostgresDBProvider implements IDBProvider, Constants {
 		// alter query begins
 		StringBuilder query = new StringBuilder();
 
-		System.out.println("\n##########Alter query##########");
+		// System.out.println("\n##########Alter query##########");
 
 		int alteredColumns = 0;
 
@@ -218,8 +203,7 @@ public class PostgresDBProvider implements IDBProvider, Constants {
 				query.append(',');
 			}
 
-			query.append(" ADD COLUMN ").append(column.getColumnName()).append(" ")
-					.append(Helper.getColumnType(column));
+			query.append(" ADD COLUMN ").append(column.getColumnName()).append(" ").append(Helper.getColumnType(column));
 		}
 
 		// drop
@@ -238,13 +222,18 @@ public class PostgresDBProvider implements IDBProvider, Constants {
 
 			query.append(alterQuery1);
 		}
-		
-		if(!query.toString().isEmpty()){
-			System.out.println("ALTER TABLE " + entity.getTableName()+ query.toString());
-		}
-		System.out.println("--------------");
 
-		return sb.toString();
+		String altQuery = query.toString();
+
+		if (!altQuery.isEmpty()) {
+			altQuery = "ALTER TABLE " + entity.getTableName() + altQuery;
+		}
+
+		return altQuery;
+
+		// /System.out.println("--------------");
+
+		// return sb.toString();
 	}
 
 	private String createSqlQueryFromExcel(EntityModel entity) {
@@ -301,10 +290,9 @@ public class PostgresDBProvider implements IDBProvider, Constants {
 				string.append(" WITHOUT TIME ZONE");
 			}
 			if (column.isAutoIncrement()) {
-				stringSequence.append(
-						"CREATE SEQUENCE " + entity.getTableName() + "_" + column.getColumnName() + "_SEQ START 1;");
-				column.setDefaultValue(
-						"nextval('" + entity.getTableName() + "_" + column.getColumnName() + "_SEQ" + "')");
+				stringSequence
+						.append("CREATE SEQUENCE " + entity.getTableName() + "_" + column.getColumnName() + "_SEQ START 1;");
+				column.setDefaultValue("nextval('" + entity.getTableName() + "_" + column.getColumnName() + "_SEQ" + "')");
 			}
 			if (StringUtils.isNotEmpty(column.getDefaultValue())) {
 				string.append(" DEFAULT ");
@@ -320,8 +308,7 @@ public class PostgresDBProvider implements IDBProvider, Constants {
 				string.append(" NOT NULL");
 			}
 			if (column.isForeignKey()) {
-				string.append(
-						" REFERENCES " + column.getForeignKeyTableName() + " (" + column.getForeignKeyName() + ")");
+				string.append(" REFERENCES " + column.getForeignKeyTableName() + " (" + column.getForeignKeyName() + ")");
 			}
 			if (StringUtils.isNotBlank(column.getComments())) {
 				String comment = "COMMENT ON COLUMN " + entity.getTableName() + "." + column.getColumnName() + " IS '"
@@ -338,10 +325,9 @@ public class PostgresDBProvider implements IDBProvider, Constants {
 
 		// System.out.println(string.toString());
 
-		return string.toString();
+		// return string.toString();
 
-		// return stringSequence.toString() + "\n" + string.toString() + "\n" +
-		// stringComment.toString();
+		return stringSequence.toString() + "\n" + string.toString() + "\n" + stringComment.toString();
 	}
 
 	@Override

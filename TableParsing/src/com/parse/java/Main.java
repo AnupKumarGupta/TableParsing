@@ -23,14 +23,20 @@ public class Main {
 
 	// JDBC driver name and database URL
 	public static final String JDBC_DRIVER = "org.postgresql.Driver";
-	public static final String SCHEMA_NAME = "hhs_creation_test";
+
+	// public static final String SCHEMA_NAME = "hhs_creation_test";
+	public static final String SCHEMA_NAME = "hhs";
+
 	public static final String DB_NAME = "WMDB";
-	public static final String DB_URL = "jdbc:postgresql://54.152.186.92:5432/" + DB_NAME + "?currentSchema="
-			+ SCHEMA_NAME;
+
+	public static final String DB_URL = "jdbc:postgresql://54.152.186.92:5432/" + DB_NAME + "?currentSchema=" + SCHEMA_NAME;
 
 	// Database credentials
-	public static final String USER = "hhs_test_user";
-	public static final String PASS = "hhs_test_user123";
+	// public static final String USER = "hhs_test_user";
+	// public static final String PASS = "hhs_test_user123";
+	public static final String USER = "iceburger";
+
+	public static final String PASS = "iceburger";
 
 	static {
 		FrameworkHelper.init();
@@ -111,17 +117,13 @@ public class Main {
 				+ aliasInputFile.substring(aliasInputFile.lastIndexOf("."), aliasInputFile.length());
 
 		int ALIAS_MAPPING_START_SHEET = Integer.parseInt(FrameworkHelper.getProperty("aliasMappingStartSheetNumber"));
-		int ALIAS_MAPPING_NUMBER_OF_SHEETS = Integer
-				.parseInt(FrameworkHelper.getProperty("aliasMappingNumberOfSheets"));
-		int ALIAS_MAPPING_KEY_COLUMN_NUMBER = Integer
-				.parseInt(FrameworkHelper.getProperty("aliasMappingKeyColumnNumber"));
-		int ALIAS_MAPPING_VALUE_COLUMN_NUMBER = Integer
-				.parseInt(FrameworkHelper.getProperty("aliasMappingValueColumnNumber"));
+		int ALIAS_MAPPING_NUMBER_OF_SHEETS = Integer.parseInt(FrameworkHelper.getProperty("aliasMappingNumberOfSheets"));
+		int ALIAS_MAPPING_KEY_COLUMN_NUMBER = Integer.parseInt(FrameworkHelper.getProperty("aliasMappingKeyColumnNumber"));
+		int ALIAS_MAPPING_VALUE_COLUMN_NUMBER = Integer.parseInt(FrameworkHelper.getProperty("aliasMappingValueColumnNumber"));
 		int ALIAS_INPUT_START_SHEET = Integer.parseInt(FrameworkHelper.getProperty("aliasInputStartSheetNumber"));
 		int ALIAS_INPUT_NUMBER_OF_SHEETS = Integer.parseInt(FrameworkHelper.getProperty("aliasInputNumberOfSheets"));
 		// Column number that needs to be replaced by value in map.
-		int ALIAS_INPUT_KEY_COLUMN_NUMBER = Integer
-				.parseInt(FrameworkHelper.getProperty("alisInputAbbreviatedColumnNumber"));
+		int ALIAS_INPUT_KEY_COLUMN_NUMBER = Integer.parseInt(FrameworkHelper.getProperty("alisInputAbbreviatedColumnNumber"));
 
 		HashMap<String, String> aliasMap = null;
 		for (int aliasMappingSheetNumber = ALIAS_MAPPING_START_SHEET; aliasMappingSheetNumber < ALIAS_MAPPING_NUMBER_OF_SHEETS; aliasMappingSheetNumber++) {
@@ -129,8 +131,8 @@ public class Main {
 					ALIAS_MAPPING_VALUE_COLUMN_NUMBER);
 		}
 
-		generateAliasExcel(aliasInputFile, ALIAS_INPUT_START_SHEET, ALIAS_INPUT_NUMBER_OF_SHEETS,
-				ALIAS_INPUT_KEY_COLUMN_NUMBER, aliasMap, aliasOutputFile);
+		generateAliasExcel(aliasInputFile, ALIAS_INPUT_START_SHEET, ALIAS_INPUT_NUMBER_OF_SHEETS, ALIAS_INPUT_KEY_COLUMN_NUMBER,
+				aliasMap, aliasOutputFile);
 	}
 
 	private static void generateSqlFromExcel() throws Exception {
@@ -144,8 +146,7 @@ public class Main {
 		for (int sheetNumber = START_SHEET; sheetNumber < NUMBER_OF_SHEETS; sheetNumber++) {
 			FileWriter fw = new FileWriter(String.format(outputFile, sheetNumber + 1));
 			List<EntityModel> entities = readExcel(inputFile, sheetNumber);
-			log.info("Total Number of entities read : " + entities.size() + " on sheet number : " + (sheetNumber + 1)
-					+ "\n");
+			log.info("Total Number of entities read : " + entities.size() + " on sheet number : " + (sheetNumber + 1) + "\n");
 			List<String> strings = generateSQLStatements(entities);
 			log.debug("********************* CREATE TABLE STATEMENTS START **********************\n");
 			for (String string : strings) {
@@ -168,7 +169,10 @@ public class Main {
 
 		List<String> strings = new ArrayList<>();
 		for (EntityModel entity : entities) {
-			strings.add(dbProvider.generateCreateTableStatement(entity));
+			String query = dbProvider.generateCreateTableStatement(entity);
+			System.out.println(query);
+			//System.out.println('\n');
+			strings.add(query);
 		}
 		return strings;
 	}
@@ -183,8 +187,8 @@ public class Main {
 	private static File generateAliasExcel(String inputFile, int inputFileStartSheetNumber, int inputFileNumberOfSheets,
 			int columnNumber, HashMap<String, String> aliasMap, String outputFilePath) throws Exception {
 		IAliasSheetGenerator aliasSheetGenerator = FrameworkHelper.getImplementation(IAliasSheetGenerator.class);
-		return aliasSheetGenerator.generateAliasSheet(inputFile, inputFileStartSheetNumber, inputFileNumberOfSheets,
-				columnNumber, aliasMap, 1, outputFilePath);
+		return aliasSheetGenerator.generateAliasSheet(inputFile, inputFileStartSheetNumber, inputFileNumberOfSheets, columnNumber,
+				aliasMap, 1, outputFilePath);
 	}
 
 }
